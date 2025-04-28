@@ -25,24 +25,24 @@ class Method_MLP(method, nn.Module):
     def __init__(self, mName, mDescription):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
-        # Input dimension changed from 4 to 784 features
-        self.fc_layer_1 = nn.Linear(784, 256)
-        self.activation_func_1 = nn.ReLU()
-        # Added another hidden layer for better representation learning
-        self.fc_layer_2 = nn.Linear(256, 128)
-        self.activation_func_2 = nn.ReLU()
-        # Output dimension changed from 2 to 10 classes (digits 0-9)
-        self.fc_layer_3 = nn.Linear(128, 10)
-        # Softmax activation for classification
-        self.activation_func_3 = nn.Softmax(dim=1)
-
         # # Input dimension changed from 4 to 784 features
-        # self.fc_layer_1 = nn.Linear(784, 128)
+        # self.fc_layer_1 = nn.Linear(784, 256)
         # self.activation_func_1 = nn.ReLU()
+        # # Added another hidden layer for better representation learning
+        # self.fc_layer_2 = nn.Linear(256, 128)
+        # self.activation_func_2 = nn.ReLU()
         # # Output dimension changed from 2 to 10 classes (digits 0-9)
-        # self.fc_layer_2 = nn.Linear(128, 10)
+        # self.fc_layer_3 = nn.Linear(128, 10)
         # # Softmax activation for classification
-        # self.activation_func_2 = nn.Softmax(dim=1)
+        # self.activation_func_3 = nn.Softmax(dim=1)
+
+        # Input dimension changed from 4 to 784 features
+        self.fc_layer_1 = nn.Linear(784, 128)
+        self.activation_func_1 = nn.ReLU()
+        # Output dimension changed from 2 to 10 classes (digits 0-9)
+        self.fc_layer_2 = nn.Linear(128, 10)
+        # Softmax activation for classification
+        self.activation_func_2 = nn.Softmax(dim=1)
 
     # it defines the forward propagation function for input x
     # this function will calculate the output layer by layer
@@ -50,13 +50,13 @@ class Method_MLP(method, nn.Module):
     def forward(self, x):
         '''Forward propagation'''
         # First hidden layer
-        h1 = self.activation_func_1(self.fc_layer_1(x))
-        # Second hidden layer
-        h2 = self.activation_func_2(self.fc_layer_2(h1))
-        # Output layer
-        y_pred = self.activation_func_3(self.fc_layer_3(h2))
         # h1 = self.activation_func_1(self.fc_layer_1(x))
-        # y_pred = self.activation_func_2(self.fc_layer_2(h1))
+        # # Second hidden layer
+        # h2 = self.activation_func_2(self.fc_layer_2(h1))
+        # # Output layer
+        # y_pred = self.activation_func_3(self.fc_layer_3(h2))
+        h1 = self.activation_func_1(self.fc_layer_1(x))
+        y_pred = self.activation_func_2(self.fc_layer_2(h1))
         return y_pred
 
     # backward error propagation will be implemented by pytorch automatically
@@ -69,6 +69,9 @@ class Method_MLP(method, nn.Module):
         loss_function = nn.CrossEntropyLoss()
         # for training accuracy investigation purpose
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
+        
+        # Add a list to record loss values
+        loss_values = []
 
         # it will be an iterative gradient updating process
         # we don't do mini-batch, we use the whole input as one batch
@@ -80,6 +83,9 @@ class Method_MLP(method, nn.Module):
             y_true = torch.LongTensor(np.array(y))
             # calculate the training loss
             train_loss = loss_function(y_pred, y_true)
+            
+            # Record the loss
+            loss_values.append(train_loss.item())
 
             # check here for the gradient init doc: https://pytorch.org/docs/stable/generated/torch.optim.Optimizer.zero_grad.html
             optimizer.zero_grad()
@@ -95,6 +101,9 @@ class Method_MLP(method, nn.Module):
                 accuracy_evaluator.data = {'true_y': y_true.numpy(), 'pred_y': y_pred.max(1)[1].numpy()}
                 metrics = accuracy_evaluator.evaluate()
                 print('Epoch:', epoch, 'Accuracy:', metrics['accuracy'], 'Loss:', train_loss.item())
+        
+        # Return the loss values for plotting
+        return loss_values
     
     def test(self, X):
         # do the testing, and result the result
@@ -106,7 +115,7 @@ class Method_MLP(method, nn.Module):
     def run(self):
         print('method running...')
         print('--start training...')
-        self.train(self.data['train']['X'], self.data['train']['y'])
+        loss_values = self.train(self.data['train']['X'], self.data['train']['y'])
         print('--start testing...')
         pred_y = self.test(self.data['test']['X'])
         
@@ -115,5 +124,5 @@ class Method_MLP(method, nn.Module):
         evaluator.data = {'true_y': self.data['test']['y'], 'pred_y': pred_y.numpy()}
         metrics = evaluator.evaluate()
         
-        return {'pred_y': pred_y, 'true_y': self.data['test']['y'], 'metrics': metrics}
+        return {'pred_y': pred_y, 'true_y': self.data['test']['y'], 'metrics': metrics, 'loss_values': loss_values}
             
