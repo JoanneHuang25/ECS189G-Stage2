@@ -4,6 +4,7 @@ from code.stage_2_code.Result_Saver import Result_Saver
 from code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
 
 #---- Multi-Layer Perceptron script for MNIST digit classification ----
 if 1:
@@ -48,6 +49,19 @@ if 1:
     metrics = result['metrics']
     for metric_name, metric_value in metrics.items():
         print(f'{metric_name}: {metric_value:.4f}')
+    
+    # Create and save the loss plot
+    print('Creating training loss plot...')
+    loss_values = result['loss_values']
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(len(loss_values)), loss_values, marker='', linestyle='-')
+    plt.title('Training Loss Over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.grid(True)
+    plt.savefig('../../result/stage_2_result/training_loss_plot.png')
+    plt.show()
+    
     print('************ Finish ************')
     # ------------------------------------------------------
     
